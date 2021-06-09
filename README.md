@@ -4,6 +4,9 @@
 
 本demo展示了如何在 Option 中增加请求 LPR 的字段。
 
+重点在 `dhcp.c` 的 `gen_option_parameter_request_list` 函数
+
+
 ## config DHCP Server
 ```
 sudo apt install isc-dhcp-server

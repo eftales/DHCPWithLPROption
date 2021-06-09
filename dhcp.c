@@ -105,7 +105,7 @@ int gen_option_parameter_request_list(uint8_t *options, int pos)
 	++*len; options[pos++] = OPTION_DOMAINNAME;
 	++*len; options[pos++] = OPTION_DNSSERVER;
 	++*len; options[pos++] = OPTION_SERVERID;
-	++*len; options[pos++] = OPTION_LPRSERVER;
+	++*len; options[pos++] = OPTION_LPRSERVER; // 请求 lpr server 的地址
 	if (portset) {
 		++*len; options[pos++] = OPTION_PORTSET;
 	}
