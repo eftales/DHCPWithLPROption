@@ -31,44 +31,6 @@ static inline int value(char ch)
 	return 0;
 }
 
-int get_ipv6_address()
-{
-	FILE *fin = fopen("/proc/net/if_inet6", "r");
-	if (!fin) {
-		fprintf(err, "Can't open /proc/net/if_inet6\n");
-		return -1;
-	}
-	char buf[200] = {0};
-	int target_scope;
-	if (mode == IPv6)
-		target_scope = 0;//global
-	else
-		target_scope = 0x20;//link
-
-	while (fgets(buf, 200, fin)) {
-		char ipv6addr[100] = {0};
-		int id;
-		int mask_len;
-		int scope;
-		int flag;
-		char name[100] = {0};
-		sscanf(buf, "%s %x %x %x %x %s", ipv6addr, &id, &mask_len, &scope, &flag, name);
-		if (strcmp(name, network_interface->name) == 0 && scope == target_scope) {
-			memset(&src, 0, sizeof(src));
-			src.sin6_family = AF_INET6;
-			int i;
-			for (i = 0; i < 16; ++i) {
-				src.sin6_addr.s6_addr[i] = (value(ipv6addr[i * 2]) << 4) + value(ipv6addr[i * 2 + 1]);
-			}
-			fclose(fin);
-			return 0;
-		}
-	}
-	fprintf(err, "%s IPv6 address of %s not found!\n", target_scope == 0 ? "Global" : "Link", network_interface->name);
-	fclose(fin);
-	return -1;
-}
-
 void init_interfaces()
 {
 	struct if_nameindex *interfaces = if_nameindex(), *interface;
@@ -125,11 +87,6 @@ void init_interfaces()
 		exit(1);
 	}
 	
-	if ((mode == IPv6 || mode == DHCPv6) && strlen(local_addr) == 0) {
-		if (get_ipv6_address() < 0) {
-			exit(1);
-		}
-	}
 }
 
 static int set_ipaddr(char *interface_name, struct sockaddr_in addr)

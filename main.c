@@ -57,85 +57,21 @@ static void init_daemon()
 int main(int argc, char **argv)
 {
 	mode = IPv4;
-	daemon = 1;
+	daemon = 0; // running in foreground
 	err = stderr;
 	portset = 0;
 	srand(time(NULL));
 	int i;
 	for (i = 1; i < argc; ++i) {
-		if (strcmp(argv[i], "-f") == 0) {
-			daemon = 0;
-		} else if (strcmp(argv[i], "-p") == 0) {
-			portset = 1;
-		} else if (i + 1 < argc && strcmp(argv[i], "--network-interface") == 0) {
+		if (i + 1 < argc && strcmp(argv[i], "--network-interface") == 0) {
 			++i;
 			strcpy(network_interface_name, argv[i]);
 			strcpy(config_interface_name, argv[i]);
 			
-		} else if (i + 1 < argc && strcmp(argv[i], "--encap-mode") == 0) {
-			++i;
-			if (strcmp(argv[i], "ipv4") == 0) {
-				mode = IPv4;
-			} else if (strcmp(argv[i], "ipv6") == 0) {
-				mode = IPv6;
-			} else if (strcmp(argv[i], "dhcpv6") == 0) {
-				mode = DHCPv6;
-			} else {
-				usage();
-				exit(0);
-			}
-		} else if (i + 1 < argc && strcmp(argv[i], "--server-addr") == 0) {
-			++i;
-			strcpy(server_addr, argv[i]);
-		} else if (i + 1 < argc && strcmp(argv[i], "--local-addr") == 0) {
-			++i;
-			strcpy(local_addr, argv[i]);
 		} else {//config-interface
 			strcpy(config_interface_name, argv[i]);
 		}
 	}
-	
-	if (mode == IPv6) {
-		if (strlen(server_addr) == 0) {
-			fprintf(err, "server-addr MUST be configured in DHCPv4-over-IPv6 mode!\n");
-			exit(0);
-		}
-		memset(&dest, 0, sizeof(dest));
-		dest.sin6_family = AF_INET6;
-		//dest.sin6_port = htons(IPv6_SERVER_PORT);
-		if (inet_pton(AF_INET6, server_addr, &dest.sin6_addr) < 0) {
-			fprintf(err, "Failed to resolve server_addr : %s\n", server_addr);
-			exit(1);
-		}
-		printf("server-addr : %s\n", server_addr);
-	}
-
-    if (mode == DHCPv6) {
-		memset(&dest, 0, sizeof(dest));
-		dest.sin6_family = AF_INET6;
-		if (strlen(server_addr) == 0) {
-			strcpy(server_addr, "ff02::1:2");
-		}
-		if (inet_pton(AF_INET6, server_addr, &dest.sin6_addr) < 0) {
-			fprintf(err, "Failed to resolve server_addr : %s\n", server_addr);
-			exit(1);
-		}
-	}
-	
-	if ((mode == IPv6 || mode == DHCPv6) && strlen(local_addr) > 0) {
-		memset(&src, 0, sizeof(src));
-		src.sin6_family = AF_INET6;
-		if (inet_pton(AF_INET6, local_addr, &src.sin6_addr) < 0) {
-			fprintf(err, "Failed to resolve local_addr : %s\n", local_addr);
-			exit(1);
-		}
-		printf("local-addr : %s\n", local_addr);
-	}
-
-	if (portset)
-		printf("port set mode\n");
-//	else
-//		printf("No Port Set!\n");
 
 	if (config_interface_name[0] == '\0') {
 		usage();
