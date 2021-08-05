@@ -1,7 +1,8 @@
 #ifndef __DHCP_H__
 #define __DHCP_H__
-
+#include<netinet/in.h>
 #include <stdint.h>
+#include<stdio.h>
 #include "lease.h"
 
 struct dhcp_packet {
@@ -43,27 +44,16 @@ int gen_option_ip_address(uint8_t *options, int pos);
 int gen_option_portset(uint8_t *options, int pos);
 
 #define HOSTNAME_LEN 80
-char hostname[HOSTNAME_LEN];
 
-uint32_t xid;/* transaction ID */
-
-int renew;/* whether renewing */
-
-int portset;
 
 typedef enum {
-	DISCOVER,
+	DISCOVER = 1,
 	OFFER,
 	REQUEST,
 	ACK
 } STATE;
 
-extern STATE next_state;
 
-extern FILE *err;
-
-#define DISCOVER 1
-#define REQUEST 3
 
 #define BOOT_REQUEST 1
 #define BOOT_REPLY 2

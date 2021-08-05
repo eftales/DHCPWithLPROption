@@ -12,6 +12,14 @@
 #include "config.h"
 #include "lease.h"
 
+extern FILE *err;
+extern MODE mode;
+extern struct interface *config_interface;
+extern struct interface *network_interface;
+extern char config_interface_name[INTERFACE_NAME_LEN];
+extern char network_interface_name[INTERFACE_NAME_LEN];
+
+
 static char* mac_to_str(unsigned char *ha)
 {
 	int i;  
@@ -59,20 +67,20 @@ void init_interfaces()
 		    addr[5] = rand() % 0xFF;
 		}
 		if (strcmp(network_interface_name, interface->if_name) == 0 && !network_interface) {
-			network_interface = malloc(sizeof(struct interface));
+			network_interface = (struct interface*)malloc(sizeof(struct interface));
 			memset(network_interface, 0, sizeof(struct interface));
 			strcpy(network_interface->name, interface->if_name);
 			memcpy(network_interface->addr, addr, 6);
-			fprintf(err, "network-interface is %s, macaddr=%s\n", network_interface->name, mac_to_str(network_interface->addr));
+			fprintf(err, "network-interface is %s, macaddr=%s\n", network_interface->name, mac_to_str((unsigned char*)network_interface->addr));
 		}
 		if (strcmp(config_interface_name, interface->if_name) == 0 && !config_interface) {
             if (!valid_addr)
                 fprintf(err, "Interface %s does not have mac address, use random value instead\n", interface->if_name);
-			config_interface = malloc(sizeof(struct interface));
+			config_interface = (struct interface*)malloc(sizeof(struct interface));
 			memset(config_interface, 0, sizeof(struct interface));
 			strcpy(config_interface->name, interface->if_name);
 			memcpy(config_interface->addr, addr, 6);
-			fprintf(err, "config-interface is %s, macaddr=%s\n", config_interface->name, mac_to_str(config_interface->addr));
+			fprintf(err, "config-interface is %s, macaddr=%s\n", config_interface->name, mac_to_str((unsigned char*)config_interface->addr));
 		}
 	}
 	if_freenameindex(interfaces);
@@ -279,10 +287,7 @@ void configure_interface(struct lease* lease)
 	fprintf(err, "\tLease time : %ds\n", lease->lease_time);
 	fprintf(err, "\tRenew time : %ds\n", lease->renew_time);
 	fprintf(err, "\tController ip : %s\n", (char*)inet_ntoa(controller_ip.sin_addr));
-	if (portset) {
-		fprintf(err, "\tPort set mask  : 0x%04x\n", lease->portset_mask);
-		fprintf(err, "\tPort set index : 0x%04x\n", lease->portset_index);
-	}
+
 
 	
 	if (set_ipaddr(config_interface->name, addr) != 0) {
@@ -296,9 +301,7 @@ void configure_interface(struct lease* lease)
 		//return;
 	}
 	config_dns(lease);
-	if (portset) {
-		config_portset(lease);
-	}
+
 	
 	save_lease(lease);
 }
@@ -310,7 +313,7 @@ void save_lease(struct lease* lease)
 	int len = strlen(path);
 	if (path[len - 1] != '/')
 		path[len++] = '/';
-	char cmd[600] = {0};
+	char cmd[700] = {0};
 	sprintf(cmd, "mkdir -p %s\n", path);
 	system(cmd);
 	memset(cmd, 0, sizeof(cmd));
@@ -331,7 +334,7 @@ int load_lease(struct lease* lease)
 	int len = strlen(path);
 	if (path[len - 1] != '/')
 		path[len++] = '/';
-	char cmd[600] = {0};
+	char cmd[700] = {0};
 	sprintf(cmd, "%s%s.lease", path, config_interface->name);
 	fprintf(err, "Loading lease from %s\n", cmd);
 	FILE *fin = fopen(cmd, "r");
@@ -343,13 +346,9 @@ int load_lease(struct lease* lease)
 	fclose(fin);
 	if (memcmp(&tmp_interface, config_interface, sizeof(struct interface)) != 0)
 		return 0;/* lease does not match! */
-	if (portset) {//port set mode
-		if (lease->portset_index == 0 && lease->portset_mask == 0)
-			return 0;/* invalid port set */
-	} else {//no port set mode
-		if (lease->portset_index != 0 || lease->portset_mask != 0)
-			return 0;/* invalid port set */
-	}
+
+	if (lease->portset_index != 0 || lease->portset_mask != 0)
+		return 0;/* invalid port set */
 	return 1;
 }
 

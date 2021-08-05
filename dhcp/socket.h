@@ -1,5 +1,9 @@
 #ifndef __SOCKET_H__
 #define __SOCKET_H__
+#include<sys/socket.h>
+#include<netinet/in.h>
+#include<arpa/inet.h>
+ #include <net/if.h>
 
 void init_socket();
 void free_socket();
@@ -36,18 +40,10 @@ int recv_packet_dhcpv6(char* packet, int max_len);
 
 #define RECV_TIMEOUT_SEC 3
 #define TIMEOUT_RETRY_TIMES 4
-int timeout_count;
+
 
 #define BUF_LEN 2000
-char buf[BUF_LEN];
 
-int ipv4_fd;
-int ipv6_fd;
-
-int send4_fd;
-int send6_fd;
-
-int listen_raw_fd;
 
 struct udp6_psedoheader {
     uint8_t srcaddr[16];

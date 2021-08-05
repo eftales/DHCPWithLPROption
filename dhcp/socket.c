@@ -14,6 +14,18 @@
 #include "interface.h"
 #include "dhcp.h"
 
+
+
+char buf[BUF_LEN];
+int ipv4_fd;
+int send4_fd;
+int listen_raw_fd;
+
+extern FILE *err;
+extern MODE mode;
+extern struct interface *network_interface;
+
+
 void init_socket()
 {	
 	listen_raw_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
@@ -177,8 +189,10 @@ void send_packet_ipv4(char *packet, int len)
 	ip->ttl = 128;
 	ip->protocol = UDP;
 	ip->check = 0;
-	inet_aton("0.0.0.0", &(ip->saddr));
-	inet_aton("255.255.255.255", &(ip->daddr));
+	ip->saddr = 0;
+	ip->daddr = 0xffffffff;
+	// inet_aton("0.0.0.0", &(ip->saddr));
+	// inet_aton("255.255.255.255", &(ip->daddr));
 	
 	udp->check = htons(udpchecksum((char*)ip, (char*)udp, len + 8, 4));
 	ip->check = checksum((uint16_t*)ip, 20);

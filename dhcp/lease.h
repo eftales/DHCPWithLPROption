@@ -20,8 +20,7 @@ struct lease {
 	uint32_t controller_ip;
 };
 
-struct lease offer_lease;
-struct lease ack_lease;
+
 
 void save_lease(struct lease* lease);
 int load_lease(struct lease* lease);

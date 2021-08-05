@@ -9,7 +9,19 @@
 #include "lease.h"
 #include "socket.h"
 
+int timeout_count;
+
+char hostname[HOSTNAME_LEN];
+uint32_t xid;/* transaction ID */
+int renew;/* whether renewing */
+
+
+struct lease offer_lease;
+struct lease ack_lease;
 STATE next_state;
+
+extern FILE *err;
+extern struct interface *config_interface;
 
 uint32_t generate_xid()
 {
@@ -97,7 +109,7 @@ int gen_option_host_name(uint8_t *options, int pos)
 int gen_option_parameter_request_list(uint8_t *options, int pos)
 {
 	options[pos++] = OPTION_PARAMETERREQUESTLIST;
-	char *len = options + pos++;
+	unsigned char *len = options + pos++;
 	*len = 0;
 	++*len; options[pos++] = OPTION_SUBNETMASK;
 	++*len; options[pos++] = OPTION_BROADCAST;
@@ -106,9 +118,7 @@ int gen_option_parameter_request_list(uint8_t *options, int pos)
 	++*len; options[pos++] = OPTION_DNSSERVER;
 	++*len; options[pos++] = OPTION_SERVERID;
 	++*len; options[pos++] = OPTION_LPRSERVER; // 请求 lpr server 的地址
-	if (portset) {
-		++*len; options[pos++] = OPTION_PORTSET;
-	}
+
 	return pos;
 }
 
@@ -139,7 +149,7 @@ int gen_option_portset(uint8_t *options, int pos)
 
 static struct dhcp_packet* make_packet(int *len)
 {
-	struct dhcp_packet *packet = malloc(sizeof(struct dhcp_packet));
+	struct dhcp_packet *packet = (dhcp_packet*)malloc(sizeof(struct dhcp_packet));
 	memset(packet, 0, sizeof(struct dhcp_packet));
 	packet->op = BOOT_REQUEST;
 	packet->htype = 1;/* ETH */
@@ -201,23 +211,6 @@ int check_packet(struct dhcp_packet *packet)
 	if (packet->options[3] != 0x63)
 		return 0;
 	
-	if (portset) {
-		int found_portset = 0;
-		uint8_t *p = packet->options + 4;
-		while (PACKET_INSIDE(p, packet) && (*p & 0xff) != 0xff) {
-			if (*p == OPTION_PORTSET) {
-				if (*(p + 1) == 4)
-					found_portset = 1;
-				break;
-			}
-			p++;
-			p += *p + 1;
-		}
-		if (!found_portset) {
-			return 0;
-		}
-	}
-	
 	return 1;
 /*	
 	if (next_state == OFFER) {	
@@ -278,7 +271,7 @@ void dhcp_offer()
 		return;
 	}
 	
-	struct dhcp_packet *packet = malloc(sizeof(struct dhcp_packet));
+	struct dhcp_packet *packet = (dhcp_packet*)malloc(sizeof(struct dhcp_packet));
 	memset(packet, 0, sizeof(struct dhcp_packet));
 	int valid = 0;
 	while (!valid) {
@@ -336,7 +329,7 @@ void dhcp_ack()
 		return;
 	}
 	
-	struct dhcp_packet *packet = malloc(sizeof(struct dhcp_packet));
+	struct dhcp_packet *packet = (dhcp_packet *)malloc(sizeof(struct dhcp_packet));
 	memset(packet, 0, sizeof(struct dhcp_packet));
 	int valid = 0;
 	while (!valid) {
