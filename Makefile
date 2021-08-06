@@ -1,6 +1,5 @@
-build-DHCPInit:
-	g++ main.c dhcp/*.h dhcp/*.c -std=c++11  -o libDHCPInit.so
+all:
+	gcc dhtest.c functions.c headers.h -o test
 
-clean :
-	rm -f $(TARGET)
-	rm -f *.o *.lease *.so
+clean:
+	rm -f test
