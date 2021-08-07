@@ -1,9 +1,3 @@
-/*
- * DHCP client simulation tool. For testing pursose only.
- * This program needs to be run with root privileges.
- * Author - Saravanakumar.G E-mail: saravana815@gmail.com
- */
-
 #include<stdio.h>
 #include<string.h>
 #include<sys/types.h>
@@ -116,15 +110,13 @@ u_int16_t icmp_len = 0;
 int main(int argc, char *argv[])
 {
 	int get_tmp = 1, get_cmd;
-	char PHY_NIC[] = "ens39";
-	iface = if_nametoindex(PHY_NIC);
+	char PHY_INF[] = "ens39";
+	iface = if_nametoindex(PHY_INF);
 	if(iface == 0) {
 		fprintf(stdout, "Interface doesnot exist\n");
 		exit(2);
 	}
-	strncpy(iface_name, PHY_NIC, 29);
-
-
+	strncpy(iface_name, PHY_INF, 29);
 
 
 	if(!dhmac_flag || strict_mac_flag) {
@@ -448,6 +440,10 @@ int main(int argc, char *argv[])
 			} else {
 				fprintf(stdout, "DHCP ack received\t - ");
 				fprintf(stdout, "Acquired IP: %s\n", get_ip_str(dhcph_g->dhcp_yip));
+				char setIP[] = "sudo ifconfig %s %s/24";
+				char cmd[300] = {0};
+				sprintf(cmd,setIP,PHY_INF,ip_str);
+				system(cmd);
 			}
 
 			/* Logs DHCP IP details to log file. This file is used for DHCP release */
